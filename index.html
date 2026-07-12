@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Predicción de fallas en infraestructura TI · IA Aplicada 2026-1</title>
+<meta name="description" content="Sistema de mantenimiento predictivo de infraestructura TI mediante aprendizaje supervisado. Proyecto final del curso Inteligencia Artificial Aplicada, Universidad de Lima.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FBFAF7;
+  --panel:#FFFFFF;
+  --ink:#171A1E;
+  --muted:#5B6069;
+  --line:#E4E1D8;
+  --accent:#E8501A;       /* naranja Orange DM / ULima */
+  --accent-dark:#B03A0F;
+  --ok:#0F7B5F;
+  --ok-bg:#E3F3ED;
+  --fail:#C22F2F;
+  --fail-bg:#FBEAEA;
+  --navy:#1E3A5F;
+  --mono:'IBM Plex Mono',monospace;
+  --display:'Space Grotesk',sans-serif;
+  --body:'Inter',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.7}
+a{color:var(--accent-dark);text-decoration:none}
+a:hover{text-decoration:underline}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+.wrap{max-width:1020px;margin:0 auto;padding:0 24px}
+
+/* ---------- NAV ---------- */
+nav{position:sticky;top:0;background:rgba(251,250,247,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);z-index:10}
+.nav-in{display:flex;align-items:center;justify-content:space-between;height:60px}
+.brand{font-family:var(--mono);font-size:13px;letter-spacing:.06em;color:var(--ink)}
+.brand b{color:var(--accent)}
+.nav-links{display:flex;gap:22px;font-size:14px}
+.nav-links a{color:var(--muted)}
+.nav-links a:hover{color:var(--ink);text-decoration:none}
+@media(max-width:640px){.nav-links{display:none}}
+
+/* ---------- HERO ---------- */
+header{padding:72px 0 56px;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-dark);margin-bottom:18px}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(30px,5vw,50px);line-height:1.12;letter-spacing:-.015em;max-width:17ch}
+.lede{margin-top:22px;font-size:18px;color:var(--muted);max-width:60ch}
+.hero-tags{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.tag{font-family:var(--mono);font-size:12px;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--muted)}
+.tag.hot{border-color:var(--accent);color:var(--accent-dark)}
+
+/* señal de telemetría */
+.pulse-band{margin-top:44px;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:18px 20px;display:flex;align-items:center;gap:20px;overflow:hidden}
+.pulse-label{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.pulse-svg{flex:1;min-width:0}
+@media(prefers-reduced-motion:no-preference){
+  .pulse-path{stroke-dasharray:900;stroke-dashoffset:900;animation:draw 3.2s linear infinite}
+  @keyframes draw{to{stroke-dashoffset:0}}
+}
+.live-dot{width:9px;height:9px;border-radius:50%;background:var(--ok);flex-shrink:0}
+@media(prefers-reduced-motion:no-preference){.live-dot{animation:blink 1.6s ease-in-out infinite}@keyframes blink{50%{opacity:.35}}}
+
+/* ---------- SECCIONES ---------- */
+section{padding:64px 0;border-bottom:1px solid var(--line)}
+.sec-head{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-dark);margin-bottom:14px}
+h2{font-family:var(--display);font-weight:500;font-size:clamp(24px,3.4vw,32px);letter-spacing:-.01em;margin-bottom:20px;max-width:26ch}
+.prose{max-width:68ch;color:#2B2F35}
+.prose p+p{margin-top:14px}
+
+/* stats del hero de resultados */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:34px 0 8px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}
+.stat .n{font-family:var(--mono);font-size:26px;font-weight:500;color:var(--ink)}
+.stat .n.warn{color:var(--fail)}
+.stat .n.good{color:var(--ok)}
+.stat .l{font-size:13px;color:var(--muted);margin-top:4px}
+
+/* flujo metodológico */
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:30px;counter-reset:step}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;position:relative}
+.step::before{counter-increment:step;content:counter(step,decimal-leading-zero);font-family:var(--mono);font-size:12px;color:var(--accent-dark);display:block;margin-bottom:10px}
+.step h3{font-family:var(--display);font-size:16px;font-weight:500;margin-bottom:6px}
+.step p{font-size:13.5px;color:var(--muted);line-height:1.55}
+
+/* tabla de métricas */
+.tbl-wrap{overflow-x:auto;margin-top:28px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:640px}
+caption{caption-side:bottom;font-size:12.5px;color:var(--muted);text-align:left;padding:12px 16px;border-top:1px solid var(--line)}
+th{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500;text-align:left;padding:14px 16px;border-bottom:1px solid var(--line)}
+td{padding:12px 16px;border-bottom:1px solid #F0EEE6;font-family:var(--mono);font-size:13.5px}
+tr:last-child td{border-bottom:none}
+td.model{font-family:var(--body);font-weight:600;font-size:14px}
+tr.lead{background:#FFF6F1}
+td .crown{color:var(--accent-dark);font-size:11px;font-family:var(--mono);margin-left:8px}
+td.bad{color:var(--fail)}
+td.good{color:var(--ok)}
+
+/* matriz de confusión */
+.cm-grid{display:grid;grid-template-columns:110px 1fr 1fr;gap:8px;max-width:560px;margin-top:28px;font-size:14px}
+.cm-corner{}
+.cm-h{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);align-self:end;padding:0 4px 8px}
+.cm-r{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);align-self:center;padding-right:6px}
+.cm-cell{border-radius:10px;padding:18px 16px;border:1px solid var(--line);background:var(--panel)}
+.cm-cell .v{font-family:var(--mono);font-size:24px;font-weight:500}
+.cm-cell .k{font-size:12px;color:var(--muted);margin-top:2px}
+.cm-cell.ok{background:var(--ok-bg);border-color:#BCE0D3}.cm-cell.ok .v{color:var(--ok)}
+.cm-cell.err{background:var(--fail-bg);border-color:#F0C6C6}.cm-cell.err .v{color:var(--fail)}
+.cm-note{font-size:13.5px;color:var(--muted);max-width:60ch;margin-top:18px}
+
+/* hallazgo */
+.finding{margin-top:34px;border-left:3px solid var(--accent);background:var(--panel);border-radius:0 12px 12px 0;padding:24px 26px;max-width:760px}
+.finding h3{font-family:var(--display);font-size:18px;font-weight:500;margin-bottom:8px}
+.finding p{font-size:15px;color:#2B2F35}
+.finding .fm{font-family:var(--mono);font-size:13px;color:var(--fail);margin-top:10px}
+
+/* recursos */
+.res-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:30px}
+.res{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;display:block;color:var(--ink);transition:border-color .15s}
+.res:hover{border-color:var(--accent);text-decoration:none}
+.res .rk{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-dark)}
+.res h3{font-family:var(--display);font-size:16px;font-weight:500;margin:8px 0 4px}
+.res p{font-size:13.5px;color:var(--muted)}
+
+/* equipo */
+.team-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:30px}
+.member{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}
+.member .nm{font-weight:600;font-size:14.5px}
+.member .cd{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-top:3px}
+
+footer{padding:44px 0 60px;font-size:13.5px;color:var(--muted)}
+footer .f-in{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap nav-in">
+    <div class="brand"><b>PdM-TI</b> · IA Aplicada 2026-1</div>
+    <div class="nav-links">
+      <a href="#proyecto">Proyecto</a>
+      <a href="#metodo">Metodología</a>
+      <a href="#resultados">Resultados</a>
+      <a href="#recursos">Recursos</a>
+      <a href="#equipo">Equipo</a>
+    </div>
+  </div>
+</nav>
+
+<header>
+  <div class="wrap">
+    <p class="eyebrow">Universidad de Lima · Facultad de Ingeniería · ODS 9</p>
+    <h1>Predicción de fallas en infraestructura TI mediante aprendizaje supervisado</h1>
+    <p class="lede">Cuatro modelos de clasificación entrenados sobre datos operativos reales para anticipar fallas antes de que ocurran — y una lección empírica sobre por qué la exactitud engaña.</p>
+    <div class="hero-tags">
+      <span class="tag hot">Random Forest</span>
+      <span class="tag">SVM</span>
+      <span class="tag">Naïve Bayes</span>
+      <span class="tag">Red neuronal</span>
+      <span class="tag">Orange Data Mining</span>
+      <span class="tag">Python · scikit-learn</span>
+    </div>
+    <div class="pulse-band" role="img" aria-label="Señal de telemetría de servidor, estable">
+      <span class="live-dot" aria-hidden="true"></span>
+      <span class="pulse-label">Telemetría del sistema</span>
+      <svg class="pulse-svg" viewBox="0 0 700 44" width="100%" height="44" aria-hidden="true" preserveAspectRatio="none">
+        <path class="pulse-path" d="M0 22 H80 L95 22 L103 8 L111 36 L119 22 H210 L225 22 L233 10 L241 34 L249 22 H370 L385 22 L393 6 L401 38 L409 22 H520 L535 22 L543 12 L551 32 L559 22 H700" fill="none" stroke="#E8501A" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      </svg>
+    </div>
+  </div>
+</header>
+
+<section id="proyecto">
+  <div class="wrap">
+    <p class="sec-head">01 · El proyecto</p>
+    <h2>Anticipar la falla en lugar de reaccionar a ella</h2>
+    <div class="prose">
+      <p>Las interrupciones no planificadas de infraestructura TI cuestan a las grandes empresas cientos de miles de dólares por hora. Este proyecto aborda el problema con mantenimiento predictivo: un sistema de clasificación supervisada que, a partir de variables operativas (temperatura, velocidad de rotación, torque y desgaste), predice si un equipo fallará — formulado como un problema de clasificación binaria.</p>
+      <p>Se entrenaron y compararon cuatro algoritmos sobre el <em>AI4I 2020 Predictive Maintenance Dataset</em> (UCI Machine Learning Repository, 10&nbsp;000 instancias), implementando el flujo completo en Orange Data Mining con una réplica independiente en Python. La coincidencia de resultados entre ambas herramientas valida la reproducibilidad del experimento.</p>
+      <p>El trabajo se alinea con el <strong>ODS 9</strong> (industria, innovación e infraestructura), al promover infraestructura digital resiliente, y con el <strong>ODS 12</strong>, al evitar el reemplazo prematuro de equipos.</p>
+    </div>
+  </div>
+</section>
+
+<section id="metodo">
+  <div class="wrap">
+    <p class="sec-head">02 · Metodología</p>
+    <h2>Un flujo experimental reproducible de extremo a extremo</h2>
+    <div class="flow">
+      <div class="step">
+        <h3>Dataset</h3>
+        <p>AI4I 2020 (UCI). 10 000 instancias, 6 variables operativas, 339 fallas (3,4 %): fuerte desbalance de clases.</p>
+      </div>
+      <div class="step">
+        <h3>Preprocesamiento</h3>
+        <p>Eliminación de identificadores y banderas de subtipo de falla (evita data leakage). Normalización de variables.</p>
+      </div>
+      <div class="step">
+        <h3>Partición</h3>
+        <p>80 % entrenamiento (8 000) / 20 % prueba (2 000), muestreo estratificado y determinístico.</p>
+      </div>
+      <div class="step">
+        <h3>Entrenamiento</h3>
+        <p>Random Forest, SVM, Naïve Bayes y red neuronal (MLP) entrenados en Orange y replicados en scikit-learn.</p>
+      </div>
+      <div class="step">
+        <h3>Evaluación</h3>
+        <p>Test on test data: matriz de confusión, AUC, F1, precisión, recall y MCC sobre el conjunto de prueba.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="resultados">
+  <div class="wrap">
+    <p class="sec-head">03 · Resultados</p>
+    <h2>Random Forest lidera — pero el recall cuenta otra historia</h2>
+
+    <div class="stat-row">
+      <div class="stat"><div class="n good">0,982</div><div class="l">AUC · Random Forest</div></div>
+      <div class="stat"><div class="n">0,660</div><div class="l">F1-score · Random Forest</div></div>
+      <div class="stat"><div class="n">0,681</div><div class="l">MCC · Random Forest</div></div>
+      <div class="stat"><div class="n warn">51,5 %</div><div class="l">Recall: fallas detectadas</div></div>
+    </div>
+
+    <div class="tbl-wrap">
+      <table>
+        <caption>Métricas sobre el conjunto de prueba (2 000 instancias, 68 fallas reales). Elaboración propia a partir de Orange Data Mining.</caption>
+        <thead>
+          <tr><th>Modelo</th><th>AUC</th><th>F1</th><th>Precisión</th><th>Recall</th><th>MCC</th></tr>
+        </thead>
+        <tbody>
+          <tr class="lead">
+            <td class="model">Random Forest<span class="crown">★ mejor global</span></td>
+            <td class="good">0,982</td><td>0,660</td><td>0,921</td><td class="bad">0,515</td><td>0,681</td>
+          </tr>
+          <tr>
+            <td class="model">Red neuronal (MLP)</td>
+            <td>0,979</td><td>0,638</td><td>0,771</td><td>0,544</td><td>0,638</td>
+          </tr>
+          <tr>
+            <td class="model">SVM</td>
+            <td>0,867</td><td>0,239</td><td class="bad">0,147</td><td>0,647</td><td>0,261</td>
+          </tr>
+          <tr>
+            <td class="model">Naïve Bayes</td>
+            <td>0,838</td><td>0,222</td><td>0,355</td><td class="bad">0,162</td><td>0,222</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <h2 style="margin-top:56px">Matriz de confusión · Random Forest</h2>
+    <div class="cm-grid" role="img" aria-label="Matriz de confusión de Random Forest: 1929 verdaderos negativos, 3 falsos positivos, 33 falsos negativos, 35 verdaderos positivos">
+      <div class="cm-corner"></div>
+      <div class="cm-h">Predicho: no falla</div>
+      <div class="cm-h">Predicho: falla</div>
+      <div class="cm-r">Real: no falla</div>
+      <div class="cm-cell ok"><div class="v">1 929</div><div class="k">Verdaderos negativos</div></div>
+      <div class="cm-cell err"><div class="v">3</div><div class="k">Falsos positivos</div></div>
+      <div class="cm-r">Real: falla</div>
+      <div class="cm-cell err"><div class="v">33</div><div class="k">Falsos negativos</div></div>
+      <div class="cm-cell ok"><div class="v">35</div><div class="k">Verdaderos positivos</div></div>
+    </div>
+    <p class="cm-note">De 68 fallas reales en el conjunto de prueba, el modelo detectó 35 y omitió 33 — con solo 3 falsas alarmas en 1 932 casos sin falla.</p>
+
+    <div class="finding">
+      <h3>El hallazgo central: la exactitud engaña</h3>
+      <p>Un modelo puede exhibir una exactitud superior al 93 % limitándose a acertar la clase mayoritaria («no falla») sin cumplir el objetivo real del sistema: detectar las fallas. Bajo desbalance de clases, la evaluación debe sustentarse en recall, F1, AUC y MCC.</p>
+      <p class="fm">accuracy ≈ 0,93 · recall ≈ 0,52 → la mitad de las fallas pasa inadvertida</p>
+    </div>
+  </div>
+</section>
+
+<section id="recursos">
+  <div class="wrap">
+    <p class="sec-head">04 · Recursos</p>
+    <h2>Todo el experimento, disponible y reproducible</h2>
+    <div class="res-grid">
+      <a class="res" href="https://github.com/MrLeo456/mantenimiento-predictivo-ti" target="_blank" rel="noopener">
+        <span class="rk">Repositorio</span>
+        <h3>Código en GitHub</h3>
+        <p>Flujo de Orange (.ows), pipeline en Python y demo Streamlit, con instrucciones de ejecución.</p>
+      </a>
+      <a class="res" href="https://doi.org/10.24432/C5HS5C" target="_blank" rel="noopener">
+        <span class="rk">Dataset</span>
+        <h3>AI4I 2020 · UCI</h3>
+        <p>Conjunto de datos público de mantenimiento predictivo. DOI: 10.24432/C5HS5C.</p>
+      </a>
+      <a class="res" href="https://orangedatamining.com" target="_blank" rel="noopener">
+        <span class="rk">Herramienta</span>
+        <h3>Orange Data Mining</h3>
+        <p>Plataforma visual de machine learning empleada para el flujo experimental principal.</p>
+      </a>
+      <a class="res" href="#" >
+        <span class="rk">Demo</span>
+        <h3>Demo en Streamlit</h3>
+        <p>Aplicación interactiva de predicción. [Reemplazar con la URL de la demo desplegada.]</p>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section id="equipo">
+  <div class="wrap">
+    <p class="sec-head">05 · Equipo</p>
+    <h2>Grupo del proyecto</h2>
+    <div class="team-grid">
+      <div class="member"><div class="nm">Matías Sebastián Calvo Muñoz</div><div class="cd">20254193 · Ulima</div></div>
+      <div class="member"><div class="nm">Leonardo Fernandez Ocaña</div><div class="cd">20253671 · Ulima</div></div>
+      <div class="member"><div class="nm">Mariano Ganoza Faroun</div><div class="cd">20255076 · Ulima</div></div>
+      <div class="member"><div class="nm">Paolo Gabriel Medina Ruiz</div><div class="cd">20254528 · Ulima</div></div>
+      <div class="member"><div class="nm">Diego Alejandro Vértiz Manrique</div><div class="cd">20256540 · Ulima</div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap f-in">
+    <span>Inteligencia Artificial Aplicada · 2026-1 · Universidad de Lima</span>
+    <span>Profesor: Javier More Sánchez · Lima, Perú</span>
+  </div>
+</footer>
+
+</body>
+</html>
